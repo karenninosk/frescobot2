@@ -20,7 +20,7 @@ BOOK_DATE, BOOK_RES, BOOK_CHOICE, MENU_VEG, MENU_SHOW, ORDER, ORDER_INSERT, CHAN
 def start(bot, update):
     id = update.message.chat_id
     em = emojize(':star:', use_aliases=True)
-    bot.sendMessage( chat_id=id, text=em + em + em + '<b>Bienvenido al Restaurante FRESCO!</b> ' + em + em + em + '
+    bot.sendMessage( chat_id=id, text=em + em + em + '<b>Bienvenido al Restaurante FRESCO!</b> ' + em + em + em + '''
 Para hacer un pedido, escriba /order
 Para hacer una reserva, escriba /book
 Para cambiar su reserva, escriba /change
@@ -28,7 +28,7 @@ Para cancelar su reserva, escriba /cancel
 Para ver el menu, escriba /menu
 Para cancelar la accion actual, escriba /back
 Para finalizar, escriba /end
-', parse_mode='HTML')
+''', parse_mode='HTML')
 # Booking
 def book(bot, update):
     id = update.message.chat_id
