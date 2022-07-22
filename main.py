@@ -44,7 +44,7 @@ def book_date(bot, update, user_data):
 def book_res(bot, update, user_data):
     user_data['date'] = update.message.text
     if user_data['table'] == 'Cualquiera':
-        try :
+        try:
             conn = sqlite3.connect('Restaurant.db')
             c = conn.cursor()
             c.execute('PRAGMA foreign_keys = ON;')
@@ -67,11 +67,11 @@ def book_res(bot, update, user_data):
                 'Table #' + str(row[0]) + ' | ' + str(row[1]) + ' | Places: ' + str(row[2]) + ' | Price: ' + str(row[3]) + ' RUB')
                 reply_keyboard = [['Economico','Grande']]
                 user_data['cheapest'] = result[0][0]
-                update.message.reply_text('Ingrese el numero de mesa o elija una de las opciones sugeridas.', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
-            except :
+                update.message.reply_text('Ingrese el numero de mesa o elija una de las opciones sugeridas.',reply_markup=ReplyKeyboardMarkup(reply_keyboard,one_time_keyboard=True))
+            except:
             update.message.reply_text('Parece que ha ingresado una fecha incorrecta. Intente nuevamente')
-        else :
-        try :
+        else:
+        try:
             conn = sqlite3.connect('Restaurant.db')
             c = conn.cursor()
             c.execute('PRAGMA foreign_keys = ON;')
@@ -95,7 +95,7 @@ user_data['biggest'] = result[0][0]
 reply_keyboard = [['Economico','Grande']]
 user_data['cheapest'] = result[0][0]
 update.message.reply_text('Ingrese el numero de mesa o elija una de las opciones sugeridas.', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
-        except :
+        except:
 update.message.reply_text('Parece que ha ingresado una fecha incorrecta. Intente nuevamente')
     return BOOK_CHOICE
     
@@ -117,7 +117,7 @@ def book_choice(bot,update,user_data):
 update.message.reply_text('Felicidades, ha reservado la mesa N°' + update.message.text + ' para el ' + user_data['date'] + '!'
 + '\n Si desea cancelar su reserva, presione /cancel.' + '\n Para cambiar su reserva, presione /change.', reply_markup= ReplyKeyboardRemove( ))
 user_data['book'] = update.message.text
-    except :
+    except:
 update.message.reply_text('Lo sentimos, Tuvimos problemas en registrar su reserva. Intentelo nuevamente.', reply_markup= ReplyKeyboardRemove( ))
     c.close()
     conn.close()
@@ -125,7 +125,7 @@ update.message.reply_text('Lo sentimos, Tuvimos problemas en registrar su reserv
 
 def book_button(bot,update,user_data):
     if update.message.text == 'Economico':
-        try :
+        try:
             conn=sqlite3.connect('Restaurant.db')
 c = conn.cursor()
             c.execute('PRAGMA foreign_keys = ON;')
@@ -144,10 +144,10 @@ d = datetime.now()
 update.message.reply_text('Felicidades, ha reservado la mesa economica N°' + str(user_data['cheapest']) + ' para el ' + user_data['date'] + '!'
 + '\n Si desea cancelar su reserva, presione /cancel.' + '\n Para cambiar su reserva, presione /change.', reply_markup= ReplyKeyboardRemove( ))
 user_data['book'] = user_data['cheapest']
-        except :
+        except:
 update.message.reply_text( 'Lo sentimos, Tuvimos problemas en registrar su reserva. Intentelo nuevamente.', reply_markup= ReplyKeyboardRemove( ))
-    else :
-        try :
+    else:
+        try:
             conn = sqlite3.connect('Restaurant.db')
             c = conn.cursor()
             c.execute('PRAGMA foreign_keys = ON;')
@@ -166,7 +166,7 @@ d = datetime.now()
 update.message.reply_text('Felicidades, ha reservado la mesa grande N°' + str(user_data['biggest']) + ' para el ' + user_data['date'] + '!'
 + '\n Si desea cancelar su reserva, presione /cancel.' + '\n Para cambiar su reserva, presione /change.', reply_markup= ReplyKeyboardRemove( ))
 user_data['book'] = user_data['biggest']
-        except :
+        except:
 update.message.reply_text('Lo sentimos, Tuvimos problemas en registrar su reserva. Intentelo nuevamente.', reply_markup= ReplyKeyboardRemove( ))
     return ConversationHandler.END
 # Booking - end
@@ -197,10 +197,10 @@ def menu_show(bot, update, user_data):
         for row in result:
 update.message.reply_text(emojize(":fork_and_knife:", use_aliases=True) +
 'Platillo: ' + str(row[1]) + ' | Tipo: ' + str(row[2]) + '\n Ingredientes: ' + str(row[3]) + '\n Precio:S/ ' + str(row[4]))
-    else :
+    else:
         if update.message.text == 'Si':
             c.execute( '''SELECT * FROM Dish WHERE Vegetarian = 1 AND Availability = 1 AND Type = '%s' ''' % (str(user_data['type'])))
-        else :
+        else:
             c.execute( '''SELECT * FROM Dish WHERE Availability = 1 AND Type = '%s' ''' % (str(user_data['type'])))
         result = c.fetchall()
         if result is None:
@@ -254,10 +254,10 @@ def order_insert(bot, update, user_data):
 user_data['ord'] = row[0]
             c.close()
             conn.close()
-        except :
+        except:
 update.message.reply_text('Error. N°de mesa no valida.')
             return ORDER_INSERT
-    else :
+    else:
 user_data['dish'] = update.message.text
     if 'dish' not in user_data:
 update.message.reply_text('Ingrese el platillo a ordenar')
@@ -273,7 +273,7 @@ c = conn.cursor()
         conn.close()
 update.message.reply_text('Este platillo no existe, por favor intente nuevamente. Puede revisar el menu escribiendo /menu')
         return ORDER_INSERT
-    else :
+    else:
         c.execute("INSERT INTO Order_Dish (Order, Dish) VALUES ('%s','%s')" % (user_data['ord'], row[0]))
         conn.commit()
 d = datetime.now()
@@ -316,12 +316,12 @@ update.message.reply_text('Ingrese el numero de mesa del cual desea cambiar la r
 def change_end(bot,update,user_data):
     conn = sqlite3.connect('Restaurant.db')
 c = conn.cursor()
-    try :
+    try:
         c.execute('PRAGMA foreign_keys = ON;')
         conn.commit()
         c.execute("UPDATE Reservations SET Table='%s' WHERE Table='%s' AND Date='%s' " % (update.message.text, user_data['book'], user_data['date'] ))
         conn.commit()
-    except :
+    except:
 update.message.reply_text('Error! EL numero de mesa no es valido o esta ya no esta disponible. Para cancelar su reserva anterior escriba /cancel')
     c.close()
     conn.close()
