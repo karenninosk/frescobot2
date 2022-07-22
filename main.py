@@ -52,7 +52,7 @@ def book_res(bot, update, user_data):
             c.execute('''SELECT * FROM Tables NATURAL JOIN
             (SELECT Table FROM Tables
             EXCEPT SELECT Table FROM Reservations
-                WHERE Date = '%s') ORDER BY Price ASC ''' % (user_ data['date']))
+                WHERE Date = '%s') ORDER BY Price ASC ''' % (user_data['date']))
             result = c.fetchall()
             c.close()
             conn.close()
