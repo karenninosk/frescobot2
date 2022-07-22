@@ -1,12 +1,17 @@
-﻿#!/ usr/bin/env python
+#!/ usr/bin/env python
 #-*- coding: utf-8 -*-
-from telegram.ext import Updater, MessageHandler, CommandHandler, RegexHandler, ConversationHandler, Filters
-from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
+from telegram.ext import Updater, MessageHandler, CallbackContext, CommandHandler, RegexHandler, ConversationHandler, Filters,  PicklePersistence
+from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
 import sqlite3
 from datetime import datetime
 from emoji import emojize
 import re
 import requests
+import logging
+
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',level=logging.INFO)
+
+logger = logging.getLogger(__name__)
 
 step = {}
 ordername = {}
@@ -15,7 +20,7 @@ BOOK_DATE, BOOK_RES, BOOK_CHOICE, MENU_VEG, MENU_SHOW, ORDER, ORDER_INSERT, CHAN
 def start(bot, update):
     id = update.message.chat_id
     em = emojize(':star:', use_aliases=True)
-    bot.sendMessage( chat_id=id, text=em + em + em + '<b>Bienvenido al Restaurante FRESCO!</b> ' + em + em + em + '''
+    bot.sendMessage( chat_id=id, text=em + em + em + '<b>Bienvenido al Restaurante FRESCO!</b> ' + em + em + em + '
 Para hacer un pedido, escriba /order
 Para hacer una reserva, escriba /book
 Para cambiar su reserva, escriba /change
@@ -23,18 +28,17 @@ Para cancelar su reserva, escriba /cancel
 Para ver el menu, escriba /menu
 Para cancelar la accion actual, escriba /back
 Para finalizar, escriba /end
-             
-''', parse_mode='HTML')
+', parse_mode='HTML')
 # Booking
 def book(bot, update):
     id = update.message.chat_id
 reply_keyboard = [['VIP', 'Vista calle'], ['Salon', 'Cualquiera']]
-update.message.reply_ text( '¿Que mesa le gustaria elegir?', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
+update.message.reply_text( '¿Que mesa le gustaria elegir?', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
     return BOOK_DATE
     
 def book_date(bot, update, user_data):
 user_data [ 'table'] = update.message.text
-update.message.reply_ text( '¿Para que fecha desea realizar la reserva?\n Ingrese la fecha en formato YYYY-MM-DD ', reply_markup=ReplyKeyboardRemove())
+update.message.reply_text( '¿Para que fecha desea realizar la reserva?\n Ingrese la fecha en formato YYYY-MM-DD ', reply_markup=ReplyKeyboardRemove())
     return BOOK_RES
 
 def book_res(bot, update, user_data):
@@ -63,9 +67,9 @@ WHERE Date = '%s') ORDER BY Price ASC ''' % (user_ data[ 'date']))
 'Table #' + str( row[0]) + ' | ' + str(row[1]) + ' | Places: ' + str(row[2]) + ' | Price: ' + str(row[3]) + ' RUB')
 reply_keyboard = [['Economico', 'Grande']]
 user_data [ 'cheapest'] = result[0][0]
-update.message.reply_ text( 'Ingrese el numero de mesa o elija una de las opciones sugeridas.', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
+update.message.reply_text( 'Ingrese el numero de mesa o elija una de las opciones sugeridas.', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
         except :
-update.message.reply_ text( 'Parece que ha ingresado una fecha incorrecta. Intente nuevamente')
+update.message.reply_text( 'Parece que ha ingresado una fecha incorrecta. Intente nuevamente')
     else :
         try :
             conn = sqlite3.connect('Restaurant.db')
@@ -79,7 +83,7 @@ WHERE Date = '%s') WHERE Type = '%s' ORDER BY Price ASC ''' % (user_data [ 'date
             result = c.fetchall()
             c.close()
             conn.close()
-update.message.reply_ text( 'Estas son las mesas disponibles' + str(user_data['table']).lower() + ' to ' + user_data['date'] + ':')
+update.message.reply_text( 'Estas son las mesas disponibles' + str(user_data['table']).lower() + ' to ' + user_data['date'] + ':')
 user_data [ 'biggest'] = result[0][0]
             max = result[0][2]
             for row in result:
@@ -90,9 +94,9 @@ user_data [ 'biggest'] = result[0][0]
                 'Mesa N°' + str(row[0]) + ' | Ubicacion: ' + str(row[2]) + ' | Precio: S/' + str(row[3]))
 reply_keyboard = [['Economico', 'Grande']]
 user_data [ 'cheapest'] = result[0][0]
-update.message.reply_ text( 'Ingrese el numero de mesa o elija una de las opciones sugeridas.', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
+update.message.reply_text( 'Ingrese el numero de mesa o elija una de las opciones sugeridas.', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
         except :
-update.message.reply_ text( 'Parece que ha ingresado una fecha incorrecta. Intente nuevamente')
+update.message.reply_text( 'Parece que ha ingresado una fecha incorrecta. Intente nuevamente')
     return BOOK_CHOICE
     
 def book_choice(bot, update, user_data):
@@ -110,11 +114,11 @@ d = datetime.now()
         summary = c.fetchone()
         c.execute( "INSERT INTO Revenue VALUES ('%s', '%s', '%s')" % (d, price[0], summary[0] + price[0]))
         conn.commit()
-update.message.reply_ text( 'Felicidades, ha reservado la mesa N°' + update.message.text + ' para el ' + user_data['date'] + '!'
+update.message.reply_text( 'Felicidades, ha reservado la mesa N°' + update.message.text + ' para el ' + user_data['date'] + '!'
 + '\n Si desea cancelar su reserva, presione /cancel.' + '\n Para cambiar su reserva, presione /change.', reply_markup= ReplyKeyboardRemove( ))
 user_data [ 'book'] = update.message.text
     except :
-update.message.reply_ text( 'Lo sentimos, Tuvimos problemas en registrar su reserva. Intentelo nuevamente.', reply_markup= ReplyKeyboardRemove( ))
+update.message.reply_text( 'Lo sentimos, Tuvimos problemas en registrar su reserva. Intentelo nuevamente.', reply_markup= ReplyKeyboardRemove( ))
     c.close()
     conn.close()
     return ConversationHandler.END
@@ -137,11 +141,11 @@ d = datetime.now()
             conn.commit()
             c.close()
             conn.close()
-update.message.reply_ text( 'Felicidades, ha reservado la mesa economica N°' + str(user_data['cheapest']) + ' para el ' + user_data['date'] + '!'
+update.message.reply_text( 'Felicidades, ha reservado la mesa economica N°' + str(user_data['cheapest']) + ' para el ' + user_data['date'] + '!'
 + '\n Si desea cancelar su reserva, presione /cancel.' + '\n Para cambiar su reserva, presione /change.', reply_markup= ReplyKeyboardRemove( ))
 user_data [ 'book'] = user_data['cheapest']
         except :
-update.message.reply_ text( 'Lo sentimos, Tuvimos problemas en registrar su reserva. Intentelo nuevamente.', reply_markup= ReplyKeyboardRemove( ))
+update.message.reply_text( 'Lo sentimos, Tuvimos problemas en registrar su reserva. Intentelo nuevamente.', reply_markup= ReplyKeyboardRemove( ))
     else :
         try :
             conn = sqlite3.connect('Restaurant.db')
@@ -159,24 +163,24 @@ d = datetime.now()
             conn.commit()
             c.close()
             conn.close()
-update.message.reply_ text( 'Felicidades, ha reservado la mesa grande N°' + str(user_data['biggest']) + ' para el ' + user_data['date'] + '!'
+update.message.reply_text( 'Felicidades, ha reservado la mesa grande N°' + str(user_data['biggest']) + ' para el ' + user_data['date'] + '!'
 + '\n Si desea cancelar su reserva, presione /cancel.' + '\n Para cambiar su reserva, presione /change.', reply_markup= ReplyKeyboardRemove( ))
 user_data [ 'book'] = user_data['biggest']
         except :
-update.message.reply_ text( 'Lo sentimos, Tuvimos problemas en registrar su reserva. Intentelo nuevamente.', reply_markup= ReplyKeyboardRemove( ))
+update.message.reply_text( 'Lo sentimos, Tuvimos problemas en registrar su reserva. Intentelo nuevamente.', reply_markup= ReplyKeyboardRemove( ))
     return ConversationHandler.END
 # Booking - end
 # Menu
 def menu(bot, update):
     id = update.message.chat_id
 reply_keyboard = [['Tradicional'], ['Sopa'], ['Postre', 'Bebidas']]
-update.message.reply_ text( 'Elija una categoria', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
+update.message.reply_text( 'Elija una categoria', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
     return MENU_VEG
     
 def menu_veg(bot, update, user_data):
 user_data [ 'type'] = update.message.text
 reply_keyboard = [['Yes', 'No']]
-update.message.reply_ text( '¿Es usted vegetariano?', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
+update.message.reply_text( '¿Es usted vegetariano?', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
     return MENU_SHOW
     
 def menu_show(bot, update, user_data):
@@ -191,7 +195,7 @@ def menu_show(bot, update, user_data):
             c.execute( '''SELECT * FROM Dishes WHERE Availability = 1 ''')
         result = c.fetchall()
         for row in result:
-update.message.reply_ text( emojize(":fork_and_knife:", use_aliases=True) +
+update.message.reply_text( emojize(":fork_and_knife:", use_aliases=True) +
 'Platillo: ' + str( row[1]) + ' | Tipo: ' + str(row[2]) + '\n Ingredientes: ' + str(row[3]) + '\n Precio:S/ ' + str(row[4]))
     else :
         if update.message.text == 'Si':
@@ -200,7 +204,7 @@ update.message.reply_ text( emojize(":fork_and_knife:", use_aliases=True) +
             c.execute( '''SELECT * FROM Dish WHERE Availability = 1 AND Type = '%s' ''' % (str(user_data['type'])))
         result = c.fetchall()
         if result is None:
-update.message.reply_ text( 'Lo siento, no hay platos disponibles, vuelva al menu /menu', reply_markup= ReplyKeyboardRemove( ))
+update.message.reply_text( 'Lo siento, no hay platos disponibles, vuelva al menu /menu', reply_markup= ReplyKeyboardRemove( ))
             return ConversationHandler.END
         if user_data['type'] == 'Tradicional':
 s = ' :stew :'
@@ -216,7 +220,7 @@ s = ' :milk :'
             update.message.reply_text(emojize(s, use_aliases=True) + 
 'Platillo: ' + str( row[1]) + '\n Ingredientes: ' + str(row[3]) + '\n Precio:S/ ' + str(row[4]))
 reply_keyboard = [[ str( row[1])] for row in result]
-update.message.reply_ text( '''Por favor seleccione el plato a ordenar.\n Tambien puede escribirlo.
+update.message.reply_text( '''Por favor seleccione el plato a ordenar.\n Tambien puede escribirlo.
 ''', reply_markup= ReplyKeyboardMarkup( reply_keyboard, one_time_keyboard=True))
     c.close()
     conn.close()
@@ -229,7 +233,7 @@ def order(bot, update, user_data):
     if update.message.text != '/order':
 user_data [ 'dish'] = update.message.text
     if 'order_table' not in user_data:
-update.message.reply_ text( 'Ingrese su N° de mesa', reply_markup=ReplyKeyboardRemove())
+update.message.reply_text( 'Ingrese su N° de mesa', reply_markup=ReplyKeyboardRemove())
     else:
         update.message.reply_text('Ingrese el platillo a ordenar')
     return ORDER_INSERT
@@ -251,12 +255,12 @@ user_data [ 'ord'] = row[0]
             c.close()
             conn.close()
         except :
-update.message.reply_ text( 'Error. N°de mesa no valida.')
+update.message.reply_text( 'Error. N°de mesa no valida.')
             return ORDER_INSERT
     else :
 user_data [ 'dish'] = update.message.text
     if 'dish' not in user_data:
-update.message.reply_ text( 'Ingrese el platillo a ordenar')
+update.message.reply_text( 'Ingrese el platillo a ordenar')
         return ORDER_INSERT
     conn = sqlite3.connect('Restaurant.db')
 c = conn.cursor()
@@ -267,7 +271,7 @@ c = conn.cursor()
     if row is None:
         c.close()
         conn.close()
-update.message.reply_ text( 'Este platillo no existe, por favor intente nuevamente. Puede revisar el menu escribiendo /menu')
+update.message.reply_text( 'Este platillo no existe, por favor intente nuevamente. Puede revisar el menu escribiendo /menu')
         return ORDER_INSERT
     else :
         c.execute( "INSERT INTO Order_Dish (Order, Dish) VALUES ('%s','%s')" % (user_data['ord'], row[0]))
@@ -277,7 +281,7 @@ d = datetime.now()
         summary = c.fetchone()
         c.execute( "INSERT INTO Income VALUES ('%s', '%s', '%s')" % (d, row[1], summary[0] + row[1]))
         conn.commit()
-update.message.reply_ text( 'El platillo fue agregado a su orden!\n' +
+update.message.reply_text( 'El platillo fue agregado a su orden!\n' +
 'Puede escribir otro platillo para agregarlo o ver nuestro menu /menu.\n' +
 'Escriba /back en caso ya no tenga mas ordenes.\n' +
 'Para finaliza y salir escriba /end')
@@ -288,7 +292,7 @@ update.message.reply_ text( 'El platillo fue agregado a su orden!\n' +
 #Removing armor
 def cancel(bot, update, user_data):
     if 'book' not in user_data:
-update.message.reply_ text( 'No tenemos reserva registrada en esta sesion.')
+update.message.reply_text( 'No tenemos reserva registrada en esta sesion.')
         return ConversationHandler.END
     conn = sqlite3.connect('Restaurant.db')
     c = conn.cursor()
@@ -298,15 +302,15 @@ update.message.reply_ text( 'No tenemos reserva registrada en esta sesion.')
     conn.commit()
     c.close()
     conn.close()
-update.message.reply_ text( 'La Mesa N°' + str(user_data['book']) + ' esta nuevamente disponible para ser reservada ' + str(user_data['date']) + '!')
+update.message.reply_text( 'La Mesa N°' + str(user_data['book']) + ' esta nuevamente disponible para ser reservada ' + str(user_data['date']) + '!')
     return ConversationHandler.END
 #Removal of armor - the end
 #Change armor
 def change(bot, update, user_data):
     if 'book' not in user_data:
-update.message.reply_ text( 'No tenemos reserva registrada en esta sesion.')
+update.message.reply_text( 'No tenemos reserva registrada en esta sesion.')
         return ConversationHandler.END
-update.message.reply_ text( 'Ingrese el numero de mesa del cual desea cambiar la reserva.')
+update.message.reply_text( 'Ingrese el numero de mesa del cual desea cambiar la reserva.')
     return CHANGE_END
     
 def change_end(bot, update, user_data):
@@ -318,21 +322,21 @@ c = conn.cursor()
         c.execute( "UPDATE Reservations SET Table='%s' WHERE Table='%s' AND Date='%s' " % (update.message.text, user_data['book'], user_data['date'] ))
         conn.commit()
     except :
-update.message.reply_ text( 'Error! EL numero de mesa no es valido o esta ya no esta disponible. Para cancelar su reserva anterior escriba /cancel')
+update.message.reply_text( 'Error! EL numero de mesa no es valido o esta ya no esta disponible. Para cancelar su reserva anterior escriba /cancel')
     c.close()
     conn.close()
-update.message.reply_ text( 'Mesa N°' + str(user_data['book']) + ' fue cambiada por la N°' + str(update.message.text) + ', para la fecha ' + str(user_data['date' ]) + '!')
+update.message.reply_text( 'Mesa N°' + str(user_data['book']) + ' fue cambiada por la N°' + str(update.message.text) + ', para la fecha ' + str(user_data['date' ]) + '!')
 user_data [ 'book']=update.message.text
     return ConversationHandler.END
 #Change Armor - End
 def end(bot, update, user_data):
-update.message.reply_ text( 'Hasta luego, ¡que lo disfrute!\n Para ayuda, escriba /start',
+update.message.reply_text( 'Hasta luego, ¡que lo disfrute!\n Para ayuda, escriba /start',
 reply_markup= ReplyKeyboardRemove( ))
 user_data.clear ()
     return ConversationHandler.END
 
 def back(bot, update, user_data):
-update.message.reply_ text( 'Ha anulado su ultima accion.\n Para ayuda, escriba /start',
+update.message.reply_text( 'Ha anulado su ultima accion.\n Para ayuda, escriba /start',
 reply_markup= ReplyKeyboardRemove( ))
     return ConversationHandler.END
 
@@ -341,7 +345,8 @@ def texter(bot, update):
     return ConversationHandler.END
 
 def main():
-    updater = Updater(token='5513146575:AAHngkSzWxCFNHDYPLVvq84At1U2mdvGPT0')
+    updater = Updater(token='5513146575:AAHngkSzWxCFNHDYPLVvq84At1U2mdvGPT0', use_context=True)
+    
     dispatcher = updater.dispatcher
     
     conv_handler = ConversationHandler(
@@ -365,11 +370,11 @@ MENU_SHOW: [ RegexHandler( '^(Si|No)$', menu_show, pass_user_data=True)],
             CHANGE_END: [RegexHandler('^(\d+)$', change_end, pass_user_data=True)]
         },
 
-        fallbacks=[CommandHandler('end', end, pass_user_data=True), CommandHandler('back', back, pass_user_data=True), CommandHandler("menu", menu), MessageHandler(Filters.text, texter, pass_user_data=True)]
+        fallbacks=[CommandHandler('end', end, pass_user_data=True), CommandHandler('back', back, pass_user_data=True), CommandHandler('menu', menu), MessageHandler(Filters.text, texter, pass_user_data=True)]
     )
-    
+     
     dispatcher.add_handler(conv_handler)
-    
+       
     updater.start_polling()
     updater.idle()
     
