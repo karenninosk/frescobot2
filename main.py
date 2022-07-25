@@ -341,10 +341,10 @@ def main():
 
         states={
             BOOK_DATE: [RegexHandler('^(VIP|Vista calle|Salon|Cualquiera)$', book_date, pass_user_data=True)],
-            BOOK_RES: [ RegexHandler('^(\d\d\d\d-\d\d-\d\d)$', book_res, pass_user_data=True)],
-            BOOK_CHOICE: [ RegexHandler('^(Economico|Grande)$', book_button, pass_user_data=True),RegexHandler('^(\d+)$', book_choice, pass_user_data=True)],
-            MENU_VEG: [ RegexHandler('^(Tradicional|Sopa|Postre|Bebida|Todas)$', menu_veg, pass_user_data=True)],
-            MENU_SHOW: [ RegexHandler('^(Si|No)$', menu_show, pass_user_data=True)],
+            BOOK_RES: [RegexHandler('^(\d\d\d\d-\d\d-\d\d)$', book_res, pass_user_data=True)],
+            BOOK_CHOICE: [RegexHandler('^(Economico|Grande)$', book_button, pass_user_data=True),RegexHandler('^(\d+)$', book_choice, pass_user_data=True)],
+            MENU_VEG: [RegexHandler('^(Tradicional|Sopa|Postre|Bebida|Todas)$', menu_veg, pass_user_data=True)],
+            MENU_SHOW: [RegexHandler('^(Si|No)$', menu_show, pass_user_data=True)],
             ORDER: [MessageHandler(Filters.text, order, pass_user_data=True)],
             ORDER_INSERT: [MessageHandler(Filters.text, order_insert, pass_user_data=True)],
             CHANGE_END: [RegexHandler('^(\d+)$', change_end, pass_user_data=True)]
